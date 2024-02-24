@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous" />
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/5f59ca6ad3.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css"/>
+  </head>
+  <body>
+    <div class="todos-bg-container">
+      <div class="container">
+        <div class="row">
+          <div class="col-12">
+            <h1 class="todos-heading">To-Do List <img src="./to-do-list.png"/></h1>
+            <h1 class="create-task-heading">
+              Create <span class="create-task-heading-subpart">Task</span>
+            </h1>
+            <input type="text" id="todoUserInput" class="todo-user-input" placeholder="Add new task here..."/>
+            <button class="add-todo-button" id="addtodobutton">Add</button>
+            <h1 class="todo-items-heading">
+              My <span class="todo-items-heading-subpart">Tasks</span>
+            </h1>
+            <ul class="todo-items-container" id="todoItemsContainer"></ul>
+            <button class="add-todo-button" id="todoSavebutton">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    let todoContainer = document.getElementById("todoItemsContainer");
+    let addtodobutton = document.getElementById("addtodobutton");
+    let saveTodobutton = document.getElementById("todoSavebutton");
+    
+    
+
+    saveTodobutton.onclick = function(){
+      localStorage.setItem("todoList", JSON.stringify(todoList));
+
+    }
+
+    function getTodoListfromlocalstorage(){
+      let stringifiedTodoList = localStorage.getItem("todoList");
+      let parseTodoList = JSON.parse(stringifiedTodoList);
+      if (parseTodoList === null){
+        return[]
+      }
+      else{
+        return parseTodoList
+      }
+    }
+
+    let todoList = getTodoListfromlocalstorage();
+
+    addtodobutton.onclick = function(){
+      onAddTodo();
+    }
+
+    function onTodoStatusChange(checkboxId, labelId, todoId){
+      let checkboxElement = document.getElementById(checkboxId);
+      let labelElement = document.getElementById(labelId);
+      labelElement.classList.toggle("checked");
+
+      let todoObjectIndex = todoList.findIndex(function(eachTodo){
+        let eachTodoId = "todo" + eachTodo.uid;
+        if(eachTodoId === todoId){
+          return true;
+        }else{
+          return false;
+        }
+      });
+
+      let todoObject = todoList[todoObjectIndex];
+       if(todoObject.isChecked === true){
+        todoObject.isChecked = false;
+       }else{
+        todoObject.isChecked = true;
+       }
+    }
+
+    function onDeleteTodo(todoId){
+      let todoElement = document.getElementById(todoId);
+      todoContainer.removeChild(todoElement);
+      let deleteIndex = todoList.findIndex(function(eachTodo){
+        let eachTodoId = "todo" + eachTodo.uid;
+          if(eachTodoId === todoId){
+            return true;
+          }else{
+            return false;
+          }
+      });
+      todoList.splice(deleteIndex,1);
+    }
+
+    function createAndappendtodo(todo) {
+      let checkboxId = "checkbox" + todo.uid;
+      let labelId = "label" + todo.uid;
+      let todoId = "todo" + todo.uid;
+
+      let todoElement = document.createElement("li");
+      todoElement.id = todoId;
+      todoElement.classList.add("todo-item-container")
+      todoContainer.appendChild(todoElement);
+
+      let inputElement = document.createElement("input");
+      inputElement.type = "checkbox";
+      inputElement.id = checkboxId;
+      inputElement.checked = todo.isChecked;
+      inputElement.onclick = function(){
+        onTodoStatusChange(checkboxId, labelId, todoId);
+      }
+
+      inputElement.classList.add("checkbox-input");
+      todoElement.appendChild(inputElement);
+
+      let labelContainer = document.createElement("div");
+      labelContainer.classList.add("label-container");
+      todoElement.appendChild(labelContainer);
+
+      let labelElement = document.createElement("label");
+      labelElement.setAttribute("for", checkboxId);
+      labelElement.id = labelId;
+      labelElement.classList.add("checkbox-label");
+      labelElement.textContent = todo.text;
+      if(todo.isChecked === true){
+        labelElement.classList.add("checked");
+      }
+      labelContainer.appendChild(labelElement);
+
+      let delContainer = document.createElement("div");
+      delContainer.classList.add("delete-icon-container");
+      labelContainer.appendChild(delContainer);
+
+      let delElement = document.createElement("i");
+      delElement.classList.add("far", "fa-trash-alt", "delete-icon");
+      delElement.onclick = function(){
+        onDeleteTodo(todoId)
+      }
+      labelContainer.appendChild(delElement);
+    }
+
+    function onAddTodo(){
+      let todoCount = todoList.length;
+      todoCount = todoCount + 1;
+
+      let userInputElement = document.getElementById("todoUserInput");
+      let userInputValue = userInputElement.value;
+
+      if(userInputValue === ""){
+        alert("You must add something ");
+        return;
+      }
+
+      let newTodo = {
+        text: userInputValue,
+        uid: todoCount
+      };
+      createAndappendtodo(newTodo);
+      todoList.push(newTodo);
+      userInputElement.value = "";
+    }
+    
+
+    for (let eachTodo of todoList){
+      createAndappendtodo(eachTodo);
+    }
+  </script> 
+</html>
